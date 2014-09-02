@@ -1,0 +1,2 @@
+importFrom(RJSONIO, toJSON)
+export(scimapRegister, getScimapId, enableScimap, isEnabledScimap, disableScimap)
