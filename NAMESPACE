@@ -1,2 +1,3 @@
 importFrom(RJSONIO, toJSON)
-export(scimapRegister, getScimapId, enableScimap, isEnabledScimap, disableScimap)
+importFrom(tools, package_dependencies)
+export(scimapIn, scimapOut, scimapRegister, getScimapId, enableScimap, isEnabledScimap, disableScimap)
