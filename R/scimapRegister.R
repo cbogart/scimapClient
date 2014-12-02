@@ -129,11 +129,6 @@ deanonymize <- function(name, webpage, pubspage) {
     addUserMetadata(list("ssnm_name"=name, "ssnm_webpage"=webpage, "ssnm_pubspage"=pubspage))
 }
 
-# For future use
-#getBootEpoch <- function() {
-#    return(system("stat -t /proc/1 | awk '{print $14}'"))
-#}
-
 #  
 # Get a "JobID", which is unique and specific to this session.
 #
@@ -362,114 +357,6 @@ function() {
            !jobinf$sessionDisabled && 
            is.na(Sys.getenv("R_TESTS", unset=NA)) && 
            is.na(Sys.getenv("R_PACKAGE_NAME", unset=NA)))
-}
-
-# Multi-dict: adds a new key/value pair to a list of
-# keys which point to lists of values.
-#
-addMultiDict <- function(array, key, value) {
-    if (is.null(key) || is.null(value)) {
-        return(array);
-    }
-    if (key == "" || value == "") {
-        return(array);
-    }
-    if (key == value) {
-        return(array);
-    }
-    if (!key %in% names(array)) {
-        array[[key]] = list()
-    }
-    array[[key]] = unique(c(array[[key]], value))
-    return(array)
-}
-
-#
-#  Attempt to guess what package the current environment is.
-#  For use inside scimapIn/scimapOut
-#
-guessPackage <- function(f) {
-   tryCatch({
-       if (typeof(f) == "character" && f == "") {
-          return("")
-       }
-       if (typeof(f) == "character") {
-          f = get(f)
-       }
-       e1 <- environment(f)
-       if (environmentName(e1) == "") {
-          return (environmentName(parent.env(e1)));
-       } else {
-          return (environmentName(e1));
-       }
-   },{
-       return(NULL);
-   })
-}
-
-#' @title Instrument functions using scimap
-#' @description Optional extra-detailed way to instrument a package
-#' @details
-#' For package authors who would like to instrument specific functions
-#' within their packages. You may want to track just major functions that
-#' are called once at a top level by users;
-#' instrumenting functions that are called recursively, or that
-#' are called many many times in loops can cause a performance hit.
-#' 
-#' Call \code{scimapIn()} at the top of a function, and \code{scimapOut()} at the
-#' bottom, to instrument its use.
-#' 
-#' Users who install your package will then not need to specifically
-#' take steps to enable scimapClient: calling these functions will
-#' collect usage data without their intervention.  (They can still
-#' disable this by calling \code{\link{disableScimap}()} just one time from the
-#' R command line)
-#'
-#' @param caller Optional; the name of the function being instrumented.  If not supplied, the
-#' functions can determine this information on their own; but specify it manually if the function
-#' name is not the way you want it recorded; for example if there are duplicate names for local
-#' functions in different contexts that you want to track separately.
-#'
-#' @examples
-#' require(scimapClient)
-#'
-#' \dontrun{
-#' calculateTrajectory <- function() {
-#'   scimapIn()
-#'   #...your code here...
-#'   scimapOut()
-#'}
-#'}
-#'
-#' \dontrun{
-#' tempname <- function() {
-#'   scimapIn("MoreMemorableName")
-#'   #...your code here...
-#'   scimapOut("MoreMemorableName")
-#'}
-#'}
-
-scimapIn <- function(caller=parent) {
-    parent = toString(sys.call(which=-1))
-   
-    if (!is.null(jobinf$last)) {
-        jobinf$weakDeps = addMultiDict(jobinf$weakDeps, toString(caller), toString(jobinf$last));
-        jobinf$weakPackageDeps = addMultiDict(jobinf$weakPackageDeps, guessPackage(caller), guessPackage(jobinf$last))
-    }
-    if (length(jobinf$stack) > 0) {
-        jobinf$dynamicDeps = addMultiDict(jobinf$dynamicDeps, toString(jobinf$stack[[length(jobinf$stack)]]), toString(caller));
-        jobinf$dynamicPackageDeps = addMultiDict(jobinf$dynamicPackageDeps, guessPackage(jobinf$stack[[length(jobinf$stack)]]), guessPackage(caller));
-    }
-    jobinf$stack = c(jobinf$stack, caller)
-    jobinf$last = NULL
-}
-
-#' @describeIn scimapIn
-scimapOut <- function(caller=parent) {
-    parent = toString(sys.call(which=-1))
-
-    length(jobinf$stack) <- length(jobinf$stack)-1
-    jobinf$last = caller
 }
 
 #

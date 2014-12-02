@@ -22,13 +22,4 @@ test_that("packet content", {
 
 test_that("Helper functions", {
    expect_that(scimapClient:::appendVersion("testthat"), matches("testthat/[0-9]+.[0-9]+.[0-9]+"));
-   dict1 <- addMultiDict(list(a=list(1,2), b=list(3,4)), "a", 7)
-   expect_that(dict1, equals(list(a=list(1,2,7),b=list(3,4))))
-   dict2 <- addMultiDict(list(a=list(1,2), b=list(3,4)), "d", 7)
-   expect_that(dict2, equals(list(a=list(1,2),b=list(3,4), d=list(7))))
-   dict3 <- addMultiDict(dict2, "d", 8)
-   expect_that(dict3, equals(list(a=list(1,2),b=list(3,4), d=list(7,8))))
-
-   # Doesn't work: hard to test this one:
-   #expect_that(scimapClient:::guessPackage(toString(sys.call(which=-1))), equals("testthat"));
 });

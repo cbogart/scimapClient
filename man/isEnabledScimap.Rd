@@ -22,6 +22,8 @@ returns silently.
 
 Tracking is automatically disabled if the environment variable R_TESTS is
 set (even to ""); this prevents spurious packets from being sent during testing.
+It's also disabled while packages are being installed (by checking for the
+environment variable R_PACKAGE_NAME).
 }
 \examples{
 ## Type this in interactive mode to see whether
