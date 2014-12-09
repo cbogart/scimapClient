@@ -25,6 +25,11 @@ This tracking is voluntary and anonymous.  To disable tracking
 type \code{\link{disableScimap}()} from the interactive prompt; to reenable
 it type \code{\link{enableScimap}()}.  If tracking is disabled, this
 function will do nothing.
+
+Please consider including this package by default all the time, by adding
+the following to your .RProfile:
+
+\code{options(defaultPackages=c(getOption("defaultPackages"),"scimapClient"))}
 }
 \examples{
 ##

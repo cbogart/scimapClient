@@ -20,6 +20,11 @@
 #' it type \code{\link{enableScimap}()}.  If tracking is disabled, this
 #' function will do nothing.
 #'
+#' Please consider including this package by default all the time, by adding
+#' the following to your .RProfile:
+#'
+#' \code{options(defaultPackages=c(getOption("defaultPackages"),"scimapClient"))}
+#'
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #' @examples
 #' ##

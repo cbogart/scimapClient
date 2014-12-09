@@ -11,6 +11,12 @@ Return your unique installation ID for scimap usage tracking
 \details{
 The scimapClient package identifies each installation of R with
 a unique ID to track usage/installation statistics.
+
+This ID is made up of
+a random but fixed number stored in your R package directory (in a file called
+\code{scimap_unique_id}), hashed against
+a few bits of your username: so it is unique to your username on your machine,
+but your username or machine cannot be inferred from the ID.
 }
 \references{
 See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}

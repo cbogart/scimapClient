@@ -30,6 +30,9 @@ Enable or revoke permission for the package to
 
  You can temporarily revoke permission (just until R is stopped and restarted)
  with \code{disableScimapThisSession}.
+
+ (The \code{disableScimap} function saves a file called \code{scimap_permission_denied}
+ in your R package directory so that the package will remember your revocation between sessions)
 }
 \section{Functions}{
 \itemize{
