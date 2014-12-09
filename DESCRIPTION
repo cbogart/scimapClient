@@ -1,8 +1,8 @@
 Package: scimapClient
 Type: Package
 Title: Collects and reports usage data on R packages
-Version: 0.1.6
-Date: 2014-12-02
+Version: 0.1.7
+Date: 2014-12-09
 Author: Christopher Bogart
 Maintainer: Christopher Bogart <cbogartdenver@gmail.com>
 Description: When this package is loaded, ending your session sends a packet to

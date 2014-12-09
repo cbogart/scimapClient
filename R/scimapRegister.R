@@ -60,6 +60,27 @@ jobinf$startup <- 0
 jobinf$sessionDisabled <- FALSE
 
 
+#  title joinlists
+#
+#  description Combine two lists
+#
+#  details Merge lists with named fields, concatenating as lists the contents
+#  of those fields.
+#
+#  examples
+#
+#     joinlists(list(x=1, y=list(3,4)), list(y=7, z=list(4,5)))
+#
+#   returns
+#
+#     list(x=1, y=list(3,4,7), z=list(4,5))
+#
+joinlists <- function(l1, l2) {
+    headers <- unique(unlist(list(names(l1), names(l2))));
+    newdata <- lapply(headers, function (k) unlist(list(l1[[k]],l2[[k]])));
+    return (setNames(newdata, headers));
+}
+
 #' @title Add user metadata
 #' 
 #' @description Upload custom metadata to \code{scisoft-net-map.isri.cmu.edu}
@@ -83,13 +104,7 @@ jobinf$sessionDisabled <- FALSE
 #' \dontrun{addUserMetadata(list(project="Arrow trajectory analysis", version="v5.4"))}
 #'
 addUserMetadata <- function(metadata) {
-
-    # Merge algorithm for lists by Stackoverflow user Aaron: 
-    #     http://stackoverflow.com/questions/9519543/merge-two-lists-in-r
-    both <- list(jobinf$userMetadata, metadata)
-    n <- unique(unlist(lapply(both, names)))
-    names(n) <- n
-    jobinf$userMetadata = lapply(n, function(ni) unlist(lapply(both, `[[`, ni)))
+    jobinf$userMetadata <- joinlists(jobinf$userMetadata, metadata)
 }
 
 #' @title Associate personal identity with usage data
@@ -141,10 +156,6 @@ getJobId <- function() {
    return(jobinf$jobID)
 }
 
-deps.identical <- function(dep1, dep2) {
-   return(identical(dep1,dep2));
-}
-
 #
 #  When this library is loaded, arrange to send a packet 
 #    just before closing, OR when someone returns to a prompt
@@ -164,7 +175,7 @@ e <- new.env()
     # Send a packet just before R shuts down
     reg.finalizer(e, function (obj) {
         thisreportdeps <- justDependencies()
-        if (!deps.identical(thisreportdeps, jobinf$lastreportdeps)) {
+        if (!identical(thisreportdeps, jobinf$lastreportdeps)) {
             scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
         jobinf$lastreportdeps <- thisreportdeps
@@ -185,14 +196,14 @@ e <- new.env()
         # Uncomment this to ignore sessions where the original packages
         #  loaded are the ONLY ones that ever load
         #
-        #if (deps.identical(jobinf$lastreportdeps, list())) {
+        #if (identical(jobinf$lastreportdeps, list())) {
         #    jobinf$lastreportdeps = justDependencies()
         #}
 
         thisreporttime <- Sys.time()
         if (thisreporttime-jobinf$lastreporttime > 3600) {  ##### Only check if it's been an hour since last prompt
             thisreportdeps <- justDependencies()
-            if (!deps.identical(thisreportdeps, jobinf$lastreportdeps)) {   ### Only send if something's changed
+            if (!identical(thisreportdeps, jobinf$lastreportdeps)) {   ### Only send if something's changed
                 scimapRegister(thisreportdeps, thisreporttime, quiet=TRUE)
             } 
             jobinf$lastreportdeps <- thisreportdeps
@@ -214,7 +225,13 @@ disabledFile <- function() { return (paste(system.file(package="scimapClient"),"
 #' @description Return your unique installation ID for scimap usage tracking
 #'
 #' @details The scimapClient package identifies each installation of R with 
-#' a unique ID to track usage/installation statistics.
+#' a unique ID to track usage/installation statistics.  
+#'
+#' This ID is made up of
+#' a random but fixed number stored in your R package directory (in a file called
+#' \code{scimap_unique_id}), hashed against
+#' a few bits of your username: so it is unique to your username on your machine,
+#' but your username or machine cannot be inferred from the ID.
 #'
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #'
@@ -258,6 +275,9 @@ getInstallId <- function() {
 #'
 #'  You can temporarily revoke permission (just until R is stopped and restarted)
 #'  with \code{disableScimapThisSession}.
+#'
+#'  (The \code{disableScimap} function saves a file called \code{scimap_permission_denied}
+#'  in your R package directory so that the package will remember your revocation between sessions)
 #'
 #' @return Returns a string of 25 decimal digits.  This
 #'    is a random but fixed number with no meaning.

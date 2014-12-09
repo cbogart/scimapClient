@@ -18,6 +18,10 @@ test_that("packet content", {
    deps <- scimapClient:::justDependencies();
    expect_that(appendVersion("testthat") %in% names(deps$pkgT), is_true());
    expect_that(deps[["userMetadata"]][["ssnm_name"]], equals("testuser"));
+   addUserMetadata(list("asdf"="1234", "ssnm_name"="othertestuser"));
+   deps <- scimapClient:::justDependencies();
+   expect_that(deps[["userMetadata"]][["ssnm_name"]], equals(c("testuser", "othertestuser")));
+   expect_that(deps[["userMetadata"]][["asdf"]], equals("1234"));
 });
 
 test_that("Helper functions", {
