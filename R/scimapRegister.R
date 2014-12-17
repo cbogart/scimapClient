@@ -62,7 +62,7 @@ jobinf$last = ""
 jobinf$lastreporttime <- Sys.time()
 jobinf$lastreportdeps <- list(pkgT=list(), dynDeps=list(), dynPackDeps=list(), weakDeps = list(), weakPackDeps=list(), userMetadata=list())
 jobinf$startup <- 0
-jobinf$sessionDisabled <- FALSE
+jobinf$sessionDisabled <- TRUE
 
 
 #  title joinlists
@@ -168,10 +168,17 @@ getJobId <- function() {
 #
 e <- new.env()
 .onAttach <- function(lib, pkg, ...) {
-    if (interactive() && isEnabledScimap() && jobinf$startup == 0 && stats::runif(1) > .9) {
-       packageStartupMessage("Note: Package scimapClient will send anonymized usage stats to ", reghost)
-       packageStartupMessage("  You can disable this forever with 'disableScimap()'")
-       packageStartupMessage("  Visit ", reghost, " to see what R packages your community uses")
+    if (interactive() && !isEnabledScimap()) {
+       packageStartupMessage("Package scimapClient is loaded, but disabled.")
+       packageStartupMessage("Type enableScimap() to enable sending of anonymous summaries of what packages")
+       packageStartupMessage("you use to ", reghost);
+       packageStartupMessage("Type ?scimapClient for more information.")
+    } else if (isEnabledScimap() && stats::runif(1) > .9) {
+       packageStartupMessage("Package scimapClient is loaded and enabled.")
+       packageStartupMessage("It will send anonymous summaries of what packages")
+       packageStartupMessage("you use to ", reghost);
+       packageStartupMessage("Type ?scimapClient for more information.")
+       packageStartupMessage("disableScimap() to disable this package")
     }
 }
 .onLoad <- function(lib, pkg, ...) {
@@ -219,11 +226,20 @@ e <- new.env()
     tcm$add(reporter, name="reporter")
 }
 
-# idfile = filename of permanent unique random key of this R installation
-idfile <- function() { return (paste(system.file(package="scimapClient"),"../scimap_unique_id",sep="/")) }
-
-# disabledfile = filename of file that exists if user does NOT want to report usage
-disabledFile <- function() { return (paste(system.file(package="scimapClient"),"../scimap_permission_denied",sep="/")) }
+#' @title Enable tracking for this session
+#'
+#' @description Set the installation ID and enable tracking for this session
+#'
+#' @details This should be called from the user's .Rprofile; ideally the
+#'   randomID value passed in should always be the same for a particular R
+#'   user. 
+#'
+#'   Generate the code for .Rprofile by running enableScimap()
+#'
+enableTracking <- function(randomID) {
+    jobinf$sessionDisabled = FALSE;
+    jobinf$scimapID = randomID;
+}
 
 #' @title Get scimap unique/anonymous ID for your installation of R
 #'
@@ -241,33 +257,13 @@ disabledFile <- function() { return (paste(system.file(package="scimapClient"),"
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #'
 getScimapId <- function() {
-   return(convolute(Sys.info()[["user"]], getInstallId()))
+   return(jobinf$scimapID);
 }
 
-convolute <- function(userid, installid) {
-    if (userid == "") { return(installid); }
-    z = rep(0, 5)
-    for(i in 0:4) {
-      z[i+1] = as.integer(substr(installid, i*5+1, i*5+5))
-    }
-    idparts = as.integer(charToRaw(userid))
-    for(i in 1:length(idparts)) {
-       z1 = i %% 5 + 1
-       z[z1] = z[z1] * (bitwAnd(idparts[i], 15)+2)
-    }
-    return(paste(z, collapse=""));
+generateScimapId <- function() {
+    return(paste(sample(c(0:9),25,replace=TRUE),sep="",collapse=""));
 }
 
-
-getInstallId <- function() {
-    if (file.exists(idfile())) {
-        id <- scan(file=idfile(), what=character(), quiet=TRUE)
-    } else {
-        id <- paste(sample(c(0:9),25,replace=TRUE),sep="",collapse="")
-        write(id, file=idfile())
-    }
-    return(id)
-}
 
 #' @title Enable or revoke permission for usage tracking
 #' @details Enable or revoke permission for the package to 
@@ -299,8 +295,9 @@ function() {
        return()
     }
     if (isEnabledScimap()) {
-       cat("Already enabled.\nCall disableScimap() if you want to disable it.\n")
-       return()
+       cat("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
+           "from your profile file (", rProfileFile(), ")");
+       return();
     }
     
 cat("This package sends anonymous usage tracking information about R packages
@@ -312,29 +309,48 @@ online at ", reghost, "
 
 This tracking is voluntary and anonymous. See the help page for
 previewPacket() for more information (type: help(previewPacket) )
+on what exactly is sent.
+
+If you agree to this, a packet of information will be sent 
+after every session; it will also add the
+following code to your .Rprofile (", rProfileFile(), ") to
+remember that you granted permission.
+
+", rProfileCode(), "
 
 ")
     
-    ok <- readline(paste("Is it OK to send anonymous usage reports to ", reghost, "? (y/n) ", sep=""))
+    ok <- readline(paste("Is it OK to change .RProfile and send anonymous usage reports? (y/n) ", sep=""))
     if (substr(ok, 1, 1) == "y" || substr(ok, 1, 1) == "Y") {
        if (jobinf$sessionDisabled) {
            jobinf$sessionDisabled <- FALSE
        } 
-       if (!isEnabledScimap()) {
-           file.remove(disabledFile())
-       }
-       cat("***Done! Usage reporting enabled.***")
+       write(paste("\n\n", rProfileCode()), file=rProfileFile(), append=TRUE)
+       cat("***Done! Usage reporting enabled.***\n")
     } else {
-       write("Disabled",file=disabledFile())
-       cat("***Disabled.  No usage reports will be sent.***\n")
+       cat("***Not enabled.  No usage reports will be sent.***\n")
     }
 }
+
+rProfileFile <- function() { return(file.path("~", ".Rprofile")); }
+
+rProfileCode <- function() {
+    return(paste("##BEGIN_ENABLE_SCIMAP
+    options(defaultPackages=c(getOption(\"defaultPackages\"),\"scimapClient\"))
+
+    setHook(packageEvent(\"scimapClient\", \"onLoad\"),
+         function(libname, pkgname) {
+              enableTracking(randomID=\"", generateScimapId(), "\"); } );
+##END_ENABLE_SCIMAP", sep=""));
+}
+
 
 #' @describeIn enableScimap Permanently disable sending of packets
 disableScimap <-
 function() {
-    write("Disabled",file=disabledFile())
-    cat("Usage reporting has been disabled.\nCall enableScimap() to renable it at any time.\n")
+    cat("To disable usage reporting, remove the scimap-related lines ",
+           "from your profile file (", rProfileFile(), ")");
+    #cat("Usage reporting has been disabled.\nCall enableScimap() to renable it at any time.\n")
 }
 
 #' @describeIn enableScimap Disable sending packets just for this session (until R is closed and reopened)
@@ -374,12 +390,10 @@ function() {
 isEnabledScimap <-
 function() {
     # Enabled if:
-    #   - no "disabledFile" exists
     #   - hasn't been temporarily disabled
     #   - we're not running tests.  Obviously, this means we can't test "isEnabledScimap" :-)  
     #   - we're not installing a package.  Prevents spurious packets during package installs
-    return(!file.exists(disabledFile()) && 
-           !jobinf$sessionDisabled && 
+    return(!jobinf$sessionDisabled && 
            is.na(Sys.getenv("R_TESTS", unset=NA)) && 
            is.na(Sys.getenv("R_PACKAGE_NAME", unset=NA)))
 }

@@ -1,15 +1,9 @@
+test_that("Disabled By Default", {
+   expect_that(isEnabledScimap(), is_false());
+});
 test_that("Anonymous keys", {
-   id <- getScimapId()
+   id <- generateScimapId()
    expect_that(id, matches("[0-9][0-9][0-9]+"));
-   expect_that(id, equals(getScimapId()));
-   jobid <- scimapClient:::getJobId()
-   expect_that(jobid, matches("[0-9][0-9][0-9]+"));
-   expect_that(jobid, equals(getJobId()));
-   expect_that(jobid, matches(paste(id, ".*", sep="")));
-   instid <- scimapClient:::getInstallId()
-   expect_that(instid, matches("[0-9][0-9][0-9]+"));
-   expect_that(instid, equals(getInstallId()));
-   expect_that(jobid, matches(paste(id, ".*", sep="")));
 });
 
 test_that("packet content", {
