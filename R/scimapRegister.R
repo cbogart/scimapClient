@@ -12,32 +12,21 @@
 #' widely used and installed these packages are.  This is helpful
 #' for demonstrating the usefulness of these packages to
 #' their employers and funding agencies.
-#' 
-#' To disable, please call \code{\link{disableScimap}()} from the command line.
-#' 
-#' This tracking is voluntary and anonymous.  To disable tracking
-#' type \code{\link{disableScimap}()} from the interactive prompt; to reenable
-#' it type \code{\link{enableScimap}()}.  If tracking is disabled, this
-#' function will do nothing.
 #'
-#' Please consider including this package by default all the time, by adding
-#' the following to your .RProfile:
-#'
-#' \code{options(defaultPackages=c(getOption("defaultPackages"),"scimapClient"))}
+#' This tracking is voluntary and anonymous.  To enable tracking
+#' for all future sessions, type \code{\link{enableScimap}()} from the 
+#' interactive prompt; to disable tracking in this and future
+#' sessions, type \code{\link{disableScimap}()}.  If tracking is disabled, this
+#' package will do nothing.
 #'
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #' @examples
-#' ##
-#' ##  Please insert this either at the top of each script,
-#' ##  or better yet in your profile to automatically load each time
-#' ##  you run R.
-#' library(scimapClient)
-#' 
-#' ##  Call this to toggle scimap off if you do not want to send data.
-#' \dontrun{scimapDisable()}
 #' 
 #' ##  Call this to reenable scimap
-#' \dontrun{scimapEnable()}
+#' \dontrun{enableScimap()}
+#' 
+#' ##  Call this to toggle scimap off if you do not want to send data.
+#' \dontrun{disableScimap()}
 #' 
 #' ## Call this to see what kind of information is sent
 #' previewPacket()
@@ -161,6 +150,15 @@ getJobId <- function() {
    return(jobinf$jobID)
 }
 
+# Internal: Heuristic check to see if this package was only just recently
+#  installed, but is not enabled yet.
+#
+newlyInstalled <- function () {
+    packagepath <- find.package("scimapClient");
+    installAge <- difftime(Sys.time(), file.info(packagepath)$mtime, units="min")
+    return (installAge < 10 && !rProfileHasCode())
+}
+
 #
 #  When this library is loaded, arrange to send a packet 
 #    just before closing, OR when someone returns to a prompt
@@ -168,19 +166,22 @@ getJobId <- function() {
 #
 e <- new.env()
 .onAttach <- function(lib, pkg, ...) {
-    if (interactive() && !isEnabledScimap()) {
+
+    if (interactive() && !isEnabledScimap() && scimapClient:::newlyInstalled()) { 
+       enableScimap(); 
+    } else if (interactive() && !isEnabledScimap()) {
        packageStartupMessage("Package scimapClient is loaded, but disabled.")
        packageStartupMessage("Type enableScimap() to enable sending of anonymous summaries of what packages")
-       packageStartupMessage("you use to ", reghost);
+       packageStartupMessage(paste("you use to http://", reghost, collapse="", sep=""));
        packageStartupMessage("Type ?scimapClient for more information.")
     } else if (isEnabledScimap() && stats::runif(1) > .9) {
        packageStartupMessage("Package scimapClient is loaded and enabled.")
        packageStartupMessage("It will send anonymous summaries of what packages")
-       packageStartupMessage("you use to ", reghost);
+       packageStartupMessage(paste("you use to http://", reghost, collapse="", sep=""));
        packageStartupMessage("Type ?scimapClient for more information.")
        packageStartupMessage("disableScimap() to disable this package")
     }
-}
+} 
 .onLoad <- function(lib, pkg, ...) {
     jobinf$startup <- Sys.time()
 
@@ -234,7 +235,8 @@ e <- new.env()
 #'   randomID value passed in should always be the same for a particular R
 #'   user. 
 #'
-#'   Generate the code for .Rprofile by running enableScimap()
+#'   Normally you should not need to write this function call; use enableScimap()
+#'   to generate the code to insert in .Rprofile.
 #'
 enableTracking <- function(randomID) {
     jobinf$sessionDisabled = FALSE;
@@ -248,11 +250,9 @@ enableTracking <- function(randomID) {
 #' @details The scimapClient package identifies each installation of R with 
 #' a unique ID to track usage/installation statistics.  
 #'
-#' This ID is made up of
-#' a random but fixed number stored in your R package directory (in a file called
-#' \code{scimap_unique_id}), hashed against
-#' a few bits of your username: so it is unique to your username on your machine,
-#' but your username or machine cannot be inferred from the ID.
+#' @return Returns a string of 25 decimal digits.  This
+#'    is a random but fixed number with no meaning.
+#'    except as a unique identifier.
 #'
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #'
@@ -260,6 +260,7 @@ getScimapId <- function() {
    return(jobinf$scimapID);
 }
 
+# For internal use only: generates random ID numbers
 generateScimapId <- function() {
     return(paste(sample(c(0:9),25,replace=TRUE),sep="",collapse=""));
 }
@@ -277,12 +278,11 @@ generateScimapId <- function() {
 #'  You can temporarily revoke permission (just until R is stopped and restarted)
 #'  with \code{disableScimapThisSession}.
 #'
-#'  (The \code{disableScimap} function saves a file called \code{scimap_permission_denied}
-#'  in your R package directory so that the package will remember your revocation between sessions)
+#'  The \code{enableScimap} function saves code in your .Rprofile that
+#'  automatically loads this package each time you run R, and sets a random unique 
+#'  ID that anonymizes your data. 
 #'
-#' @return Returns a string of 25 decimal digits.  This
-#'    is a random but fixed number with no meaning.
-#'    except as a unique identifier.
+#'  \code{disableScimap} removes that code from your .Rprofile.
 #'
 #' @references See your usage and others' at \url{http://scisoft-net-map.isri.cmu.edu}
 #'
@@ -291,7 +291,6 @@ generateScimapId <- function() {
 enableScimap <-
 function() {
     if (!interactive()) {
-       cat("The function enableScimap() only works in interactive mode.")
        return()
     }
     if (isEnabledScimap()) {
@@ -300,7 +299,8 @@ function() {
        return();
     }
     
-cat("This package sends anonymous usage tracking information about R packages
+cat("-------------------------------
+This package can send anonymous usage tracking information about R packages
 to a server that allows authors of packages to track how
 widely used and installed they are.  This is helpful
 for demonstrating the usefulness of these packages to 
@@ -312,15 +312,16 @@ previewPacket() for more information (type: help(previewPacket) )
 on what exactly is sent.
 
 If you agree to this, a packet of information will be sent 
-after every session; it will also add the
+after every R session from now on; it will also add the
 following code to your .Rprofile (", rProfileFile(), ") to
-remember that you granted permission.
+remember that you granted permission.  You can disable it later by
+removing this code from .Rprofile.
 
 ", rProfileCode(), "
 
 ")
     
-    ok <- readline(paste("Is it OK to change .RProfile and send anonymous usage reports? (y/n) ", sep=""))
+    ok <- readline(paste("Is it OK to change .RProfile and send anonymous usage reports? (y/n) ", collapse="", sep=""))
     if (substr(ok, 1, 1) == "y" || substr(ok, 1, 1) == "Y") {
        if (jobinf$sessionDisabled) {
            jobinf$sessionDisabled <- FALSE
@@ -332,25 +333,49 @@ remember that you granted permission.
     }
 }
 
-rProfileFile <- function() { return(file.path("~", ".Rprofile")); }
+# Internal: the name of the user's .Rprofile (even if it doesn't exist currently)
+rProfileFile <- function() { return(file.path(tools::file_path_as_absolute("~"), ".Rprofile")); }
 
+# Internal: check whether user's .Rprofile contains our startup code
+rProfileHasCode <- function() { 
+      return(file.exists(rProfileFile()) && 
+             length(grep("BEGIN_ENABLE_SCIMAP", readLines(rProfileFile()))) > 0);
+}
+
+# Internal: the startup code that should be put into the .Rprofile
 rProfileCode <- function() {
     return(paste("##BEGIN_ENABLE_SCIMAP
     options(defaultPackages=c(getOption(\"defaultPackages\"),\"scimapClient\"))
 
     setHook(packageEvent(\"scimapClient\", \"onLoad\"),
          function(libname, pkgname) {
-              enableTracking(randomID=\"", generateScimapId(), "\"); } );
-##END_ENABLE_SCIMAP", sep=""));
+              scimapClient:::enableTracking(randomID=\"", generateScimapId(), "\"); } );
+##END_ENABLE_SCIMAP", collapse="", sep=""));
 }
 
 
 #' @describeIn enableScimap Permanently disable sending of packets
 disableScimap <-
 function() {
-    cat("To disable usage reporting, remove the scimap-related lines ",
-           "from your profile file (", rProfileFile(), ")");
-    #cat("Usage reporting has been disabled.\nCall enableScimap() to renable it at any time.\n")
+    backupfile <- paste(rProfileFile(), ".backup", as.numeric(Sys.time()), collapse="", sep="")
+    file.copy(rProfileFile(), backupfile);
+    oldProfile <- readLines(rProfileFile());
+    newprofile <- ""
+    betweenTheComments <- FALSE
+    for (l in oldProfile) {
+        if (length(grep("##BEGIN_ENABLE_SCIMAP", l))>0) {
+            betweenTheComments <- TRUE;
+        }
+        if (betweenTheComments == FALSE) {
+            newprofile <- c(newprofile, l)
+        }
+        if (length(grep("##END_ENABLE_SCIMAP", l))>0) {
+            betweenTheComments <- TRUE;
+        }
+    }
+    write(newprofile, file=rProfileFile(), append=FALSE)
+    disableScimapThisSession()
+    cat(paste("The ", rProfileFile(), " file has been modified to disable usage reporting\n (and backed up to ", backupfile, ").\n Call enableScimap() to renable it at any time.\n", collapse="", sep=""))
 }
 
 #' @describeIn enableScimap Disable sending packets just for this session (until R is closed and reopened)
@@ -403,7 +428,7 @@ function() {
 #   appendVersion("stats") returns "stats/1.0.2"
 #
 appendVersion <- function(pkgname) {
-    return (paste(pkgname, utils::packageVersion(pkgname), sep="/"));
+    return (paste(pkgname, utils::packageVersion(pkgname), collapse="", sep="/"));
 }
 
 #
