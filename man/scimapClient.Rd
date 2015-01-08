@@ -19,30 +19,18 @@ widely used and installed these packages are.  This is helpful
 for demonstrating the usefulness of these packages to
 their employers and funding agencies.
 
-To disable, please call \code{\link{disableScimap}()} from the command line.
-
-This tracking is voluntary and anonymous.  To disable tracking
-type \code{\link{disableScimap}()} from the interactive prompt; to reenable
-it type \code{\link{enableScimap}()}.  If tracking is disabled, this
-function will do nothing.
-
-Please consider including this package by default all the time, by adding
-the following to your .RProfile:
-
-\code{options(defaultPackages=c(getOption("defaultPackages"),"scimapClient"))}
+This tracking is voluntary and anonymous.  To enable tracking
+for all future sessions, type \code{\link{enableScimap}()} from the
+interactive prompt; to disable tracking in this and future
+sessions, type \code{\link{disableScimap}()}.  If tracking is disabled, this
+package will do nothing.
 }
 \examples{
-##
-##  Please insert this either at the top of each script,
-##  or better yet in your profile to automatically load each time
-##  you run R.
-library(scimapClient)
+##  Call this to reenable scimap
+\dontrun{enableScimap()}
 
 ##  Call this to toggle scimap off if you do not want to send data.
-\dontrun{scimapDisable()}
-
-##  Call this to reenable scimap
-\dontrun{scimapEnable()}
+\dontrun{disableScimap()}
 
 ## Call this to see what kind of information is sent
 previewPacket()

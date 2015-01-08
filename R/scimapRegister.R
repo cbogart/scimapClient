@@ -238,6 +238,9 @@ e <- new.env()
 #'   Normally you should not need to write this function call; use enableScimap()
 #'   to generate the code to insert in .Rprofile.
 #'
+#' @param randomID  Should be a random string that is stable for a particular
+#'   R user.
+#'
 enableTracking <- function(randomID) {
     jobinf$sessionDisabled = FALSE;
     jobinf$scimapID = randomID;

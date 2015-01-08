@@ -11,11 +11,6 @@ disableScimap()
 
 disableScimapThisSession()
 }
-\value{
-Returns a string of 25 decimal digits.  This
-   is a random but fixed number with no meaning.
-   except as a unique identifier.
-}
 \description{
 Enable or revoke permission for usage tracking
 }
@@ -31,8 +26,11 @@ Enable or revoke permission for the package to
  You can temporarily revoke permission (just until R is stopped and restarted)
  with \code{disableScimapThisSession}.
 
- (The \code{disableScimap} function saves a file called \code{scimap_permission_denied}
- in your R package directory so that the package will remember your revocation between sessions)
+ The \code{enableScimap} function saves code in your .Rprofile that
+ automatically loads this package each time you run R, and sets a random unique
+ ID that anonymizes your data.
+
+ \code{disableScimap} removes that code from your .Rprofile.
 }
 \section{Functions}{
 \itemize{
