@@ -301,6 +301,7 @@ function() {
            "from your profile file (", rProfileFile(), ")");
        return();
     }
+    newScimapId = generateScimapId();
     
 cat("-------------------------------
 This package can send anonymous usage tracking information about R packages
@@ -320,7 +321,7 @@ following code to your .Rprofile (", rProfileFile(), ") to
 remember that you granted permission.  You can disable it later by
 removing this code from .Rprofile.
 
-", rProfileCode(), "
+", rProfileCode(newScimapId), "
 
 ")
     
@@ -329,7 +330,8 @@ removing this code from .Rprofile.
        if (jobinf$sessionDisabled) {
            jobinf$sessionDisabled <- FALSE
        } 
-       write(paste("\n\n", rProfileCode()), file=rProfileFile(), append=TRUE)
+       write(paste("\n\n", rProfileCode(newScimapId)), file=rProfileFile(), append=TRUE)
+       enableTracking(randomID=newScimapId);
        cat("***Done! Usage reporting enabled.***\n")
     } else {
        cat("***Not enabled.  No usage reports will be sent.***\n")
@@ -346,13 +348,13 @@ rProfileHasCode <- function() {
 }
 
 # Internal: the startup code that should be put into the .Rprofile
-rProfileCode <- function() {
+rProfileCode <- function(newScimapId) {
     return(paste("##BEGIN_ENABLE_SCIMAP
     options(defaultPackages=c(getOption(\"defaultPackages\"),\"scimapClient\"))
 
     setHook(packageEvent(\"scimapClient\", \"onLoad\"),
          function(libname, pkgname) {
-              scimapClient:::enableTracking(randomID=\"", generateScimapId(), "\"); } );
+              scimapClient:::enableTracking(randomID=\"", newScimapId, "\"); } );
 ##END_ENABLE_SCIMAP", collapse="", sep=""));
 }
 
