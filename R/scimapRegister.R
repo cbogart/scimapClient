@@ -34,11 +34,10 @@
 NULL
 
 
-reghost = "scisoft-net-map.isri.cmu.edu"
-regport = 7778
-
 # Local variables.
 jobinf <- new.env()
+jobinf$reghost = "scisoft-net-map.isri.cmu.edu"
+jobinf$regport = 7778
 jobinf$jobID = ""
 jobinf$stack = list()
 jobinf$staticDeps = list()
@@ -99,6 +98,31 @@ joinlists <- function(l1, l2) {
 #'
 addUserMetadata <- function(metadata) {
     jobinf$userMetadata <- joinlists(jobinf$userMetadata, metadata)
+}
+
+
+#' @title Set packet destination
+#' 
+#' @description Change the site to which usage data packets are sent
+#'
+#' @details We would love it if you would send packets to 
+#'     \code{scisoft-net-map.isri.cmu.edu}, port 7778.  However this is open
+#'     source software, and you're free to repurpose it however you like.  You can
+#'     send packets to your own version of the site (which you're free to copy
+#'     from \code{https://github.com/cbogart/scisoft-net-map}).  That code
+#'     contains a script called scripts/registry/register.py that listens on port 7778
+#'     for UDP packets from this R package.  
+#'
+#' @param site The site name where you would like to send packets: default \code{scisoft-net-map.isri.cmu.edu}
+#'
+#' @param port The port number: default 7778
+#'
+#' @examples
+#' \dontrun{setPacketDestination("scisoft-net-map.isri.cmu.edu", 7778)}
+#'
+setPacketDestination <- function(site, port) {
+    jobinf$reghost = site;
+    jobinf$regport = port;
 }
 
 #' @title Associate personal identity with usage data
@@ -172,28 +196,31 @@ e <- new.env()
     } else if (interactive() && !isEnabledScimap()) {
        packageStartupMessage("Package scimapClient is loaded, but disabled.")
        packageStartupMessage("Type enableScimap() to enable sending of anonymous summaries of what packages")
-       packageStartupMessage(paste("you use to http://", reghost, collapse="", sep=""));
+       packageStartupMessage(paste("you use to http://", jobinf$reghost, collapse="", sep=""));
        packageStartupMessage("Type ?scimapClient for more information.")
     } else if (isEnabledScimap() && stats::runif(1) > .9) {
        packageStartupMessage("Package scimapClient is loaded and enabled.")
        packageStartupMessage("It will send anonymous summaries of what packages")
-       packageStartupMessage(paste("you use to http://", reghost, collapse="", sep=""));
+       packageStartupMessage(paste("you use to http://", jobinf$reghost, collapse="", sep=""));
        packageStartupMessage("Type ?scimapClient for more information.")
        packageStartupMessage("disableScimap() to disable this package")
     }
 } 
+
 .onLoad <- function(lib, pkg, ...) {
     jobinf$startup <- Sys.time()
 
     # Send a packet just before R shuts down
-    reg.finalizer(e, function (obj) {
+    finalize <- function (obj) {
         thisreportdeps <- justDependencies()
         if (!identical(thisreportdeps, jobinf$lastreportdeps)) {
             scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
         jobinf$lastreportdeps <- thisreportdeps
         jobinf$lastreporttime <- Sys.time()
-    }, onexit=TRUE)
+    }
+    reg.finalizer(e, finalize, onexit=TRUE)
+    cleanup::on.sigterm(finalize)
 
     # At R prompt, if it's been an hour since the last check,
     # then send a packet.  Trying to capture the situation where a user
@@ -309,7 +336,7 @@ to a server that allows authors of packages to track how
 widely used and installed they are.  This is helpful
 for demonstrating the usefulness of these packages to 
 their employers and funding agencies.  You can see that data
-online at ", reghost, "
+online at ", jobinf$reghost, "
 
 This tracking is voluntary and anonymous. See the help page for
 previewPacket() for more information (type: help(previewPacket) )
@@ -551,11 +578,11 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
     topCall <- toString(sys.call(which=1)); 
     if (isEnabledScimap()) {
         result = tryCatch({
-          a <- make.socket(reghost, regport)
+          a <- make.socket(jobinf$reghost, jobinf$regport)
           on.exit(close.socket(a))
           write.socket(a, scimapPacket(deps, thetime))
         }, error = function(e) {
-          cat("scimapClient couldn't upload usage data to", reghost, "\n")
+          cat("scimapClient couldn't upload usage data to", jobinf$reghost, "\n")
         })
     }
 }
