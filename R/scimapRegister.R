@@ -71,7 +71,7 @@ jobinf$sessionDisabled <- TRUE
 joinlists <- function(l1, l2) {
     headers <- unique(unlist(list(names(l1), names(l2))));
     newdata <- lapply(headers, function (k) unlist(list(l1[[k]],l2[[k]])));
-    return (setNames(newdata, headers));
+    return (stats::setNames(newdata, headers));
 }
 
 #' @title Add user metadata
