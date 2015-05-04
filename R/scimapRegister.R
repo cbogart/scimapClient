@@ -212,12 +212,12 @@ e <- new.env()
 
     # Send a packet just before R shuts down
     finalize <- function (obj) {
-        thisreportdeps <- justDependencies()
-        if (!identical(thisreportdeps, jobinf$lastreportdeps)) {
-            scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
+        thisreportdeps <- scimapClient:::justDependencies()
+        if (!scimapClient:::identical(thisreportdeps, scimapClient:::jobinf$lastreportdeps)) {
+            scimapClient:::scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
-        jobinf$lastreportdeps <- thisreportdeps
-        jobinf$lastreporttime <- Sys.time()
+        scimapClient:::jobinf$lastreportdeps <- thisreportdeps
+        scimapClient:::jobinf$lastreporttime <- Sys.time()
     }
     reg.finalizer(e, finalize, onexit=TRUE)
     cleanup::on.sigterm(finalize)
