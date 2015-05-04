@@ -213,7 +213,7 @@ e <- new.env()
     # Send a packet just before R shuts down
     finalize <- function (obj) {
         thisreportdeps <- scimapClient:::justDependencies()
-        if (!scimapClient:::identical(thisreportdeps, scimapClient:::jobinf$lastreportdeps)) {
+        if (!identical(thisreportdeps, scimapClient:::jobinf$lastreportdeps)) {
             scimapClient:::scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
         scimapClient:::jobinf$lastreportdeps <- thisreportdeps
