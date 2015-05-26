@@ -216,8 +216,8 @@ e <- new.env()
         if (!identical(thisreportdeps, scimapClient:::jobinf$lastreportdeps)) {
             scimapClient:::scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
-        scimapClient:::jobinf$lastreportdeps <- thisreportdeps
-        scimapClient:::jobinf$lastreporttime <- Sys.time()
+        #scimapClient:::jobinf$lastreportdeps <- thisreportdeps
+        #scimapClient:::jobinf$lastreporttime <- Sys.time()
     }
     reg.finalizer(e, finalize, onexit=TRUE)
     cleanup::on.sigusr1(finalize)
