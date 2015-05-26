@@ -220,7 +220,7 @@ e <- new.env()
         scimapClient:::jobinf$lastreporttime <- Sys.time()
     }
     reg.finalizer(e, finalize, onexit=TRUE)
-    cleanup::on.sigterm(finalize)
+    cleanup::on.sigusr1(finalize)
 
     # At R prompt, if it's been an hour since the last check,
     # then send a packet.  Trying to capture the situation where a user
