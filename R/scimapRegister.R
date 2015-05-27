@@ -190,7 +190,7 @@ newlyInstalled <- function () {
 #    after an hour of idle time.
 #
 e <- new.env()
-.onAttach <- function(lib, pkg, ...) {
+.onLoad <- function(lib, pkg, ...) {
 
     if (interactive() && !isEnabledScimap() && scimapClient:::newlyInstalled()) { 
        enableScimap(); 
@@ -272,7 +272,7 @@ e <- new.env()
 enableTracking <- function(randomID) {
     jobinf$sessionDisabled = FALSE;
     jobinf$scimapID = randomID;
-    cat("***Usage reporting enabled.***\n")
+    cat("***Usage metering enabled. Use disableScimap() to disable.***\n")
 }
 
 #' @title Get scimap unique/anonymous ID for your installation of R
