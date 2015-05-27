@@ -590,15 +590,16 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
         setTimeLimit(elapsed=3, transient=TRUE);
         result = tryCatch({
           cat("Make socket");
-          #a <- make.socket(jobinf$reghost, jobinf$regport)
-          a <- socketConnection(host=jobinf$reghost, port=jobinf$regport, timeout=2);
+          a <- make.socket(jobinf$reghost, jobinf$regport)
+          #a <- socketConnection(host=jobinf$reghost, port=jobinf$regport, timeout=2);
           #cat("OnExit Close socket");
-          #on.exit(close.socket(a))
+          on.exit(close.socket(a))
           cat("Write socket");
-          writeLines(scimapPacket(deps, thetime),a)
+          #writeLines(scimapPacket(deps, thetime),a)
+          write.socket(a, scimapPacket(dpes,thetime))
           cat("Socket written");
-          close(a);
-          cat("Socket closed");
+          #close(a);
+          #cat("Socket closed");
         }, error = function(e) {
           cat("scimapClient couldn't upload usage data to", jobinf$reghost, "\n")
         })
