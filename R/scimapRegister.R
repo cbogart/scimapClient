@@ -178,9 +178,10 @@ getJobId <- function() {
 #  installed, but is not enabled yet.
 #
 newlyInstalled <- function () {
-    packagepath <- find.package("scimapClient");
-    installAge <- difftime(Sys.time(), file.info(packagepath)$mtime, units="min")
-    return (installAge < 10 && !rProfileHasCode())
+    return True;   # permanently enabled for Rocker
+    #packagepath <- find.package("scimapClient");
+    #installAge <- difftime(Sys.time(), file.info(packagepath)$mtime, units="min")
+    #return (installAge < 10 && !rProfileHasCode())
 }
 
 #
@@ -295,6 +296,33 @@ generateScimapId <- function() {
     return(paste(sample(c(0:9),25,replace=TRUE),sep="",collapse=""));
 }
 
+#'
+#' @title Explain what metering will do, if enabled
+#' 
+explainScimap <-
+function(newScimapId) {
+cat("-------------------------------
+This package can send anonymous usage tracking information about R packages
+to a server that allows authors of packages to track how
+widely used and installed they are.  This is helpful
+for demonstrating the usefulness of these packages to 
+their employers and funding agencies.  You can see that data
+online at ", jobinf$reghost, "
+
+This tracking is voluntary and anonymous. See the help page for
+previewPacket() for more information (type: help(previewPacket) )
+on what exactly is sent.
+
+If you agree to this, a packet of information will be sent 
+after every R session from now on; it will also add the
+following code to your .Rprofile (", rProfileFile(), ") to
+remember that you granted permission.  You can disable it later by
+removing this code from .Rprofile.
+
+", rProfileCode(newScimapId), "
+
+")
+}
 
 #' @title Enable or revoke permission for usage tracking
 #' @details Enable or revoke permission for the package to 
@@ -330,30 +358,12 @@ function() {
     }
     newScimapId = generateScimapId();
     
-cat("-------------------------------
-This package can send anonymous usage tracking information about R packages
-to a server that allows authors of packages to track how
-widely used and installed they are.  This is helpful
-for demonstrating the usefulness of these packages to 
-their employers and funding agencies.  You can see that data
-online at ", jobinf$reghost, "
-
-This tracking is voluntary and anonymous. See the help page for
-previewPacket() for more information (type: help(previewPacket) )
-on what exactly is sent.
-
-If you agree to this, a packet of information will be sent 
-after every R session from now on; it will also add the
-following code to your .Rprofile (", rProfileFile(), ") to
-remember that you granted permission.  You can disable it later by
-removing this code from .Rprofile.
-
-", rProfileCode(newScimapId), "
-
-")
-    
-    ok <- readline(paste("Is it OK to change .RProfile and send anonymous usage reports? (y/n) ", collapse="", sep=""))
-    if (substr(ok, 1, 1) == "y" || substr(ok, 1, 1) == "Y") {
+    ok <- readline(paste("Send anonymous usage reports? (y)es, (n)o, more (i)nfo: ", collapse="", sep=""))
+    if (substr(ok, 1, 1) == "i" || substr(ok, 1, 1) == "I") {
+        explainScimap(newScimapId);
+        enableScimap();
+    }
+    else if (substr(ok, 1, 1) == "y" || substr(ok, 1, 1) == "Y") {
        if (jobinf$sessionDisabled) {
            jobinf$sessionDisabled <- FALSE
        } 
@@ -578,9 +588,13 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
     topCall <- toString(sys.call(which=1)); 
     if (isEnabledScimap()) {
         result = tryCatch({
+          cat("Make socket");
           a <- make.socket(jobinf$reghost, jobinf$regport)
+          cat("OnExit Close socket");
           on.exit(close.socket(a))
+          cat("Write socket");
           write.socket(a, scimapPacket(deps, thetime))
+          cat("Socket written");
         }, error = function(e) {
           cat("scimapClient couldn't upload usage data to", jobinf$reghost, "\n")
         })
