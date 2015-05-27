@@ -351,6 +351,7 @@ function() {
     if (!interactive()) {
        return()
     }
+    cat("");
     if (isEnabledScimap()) {
        cat("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
            "from your profile file (", rProfileFile(), ")");
