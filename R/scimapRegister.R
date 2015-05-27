@@ -358,7 +358,8 @@ function() {
     }
     newScimapId = generateScimapId();
     
-    ok <- readline(paste("Send anonymous usage reports? (y)es, (n)o, more (i)nfo: ", collapse="", sep=""))
+    cat("Send anonymous usage reports? (y)es, (n)o, more (i)nfo: ");
+    ok <- readline()
     if (substr(ok, 1, 1) == "i" || substr(ok, 1, 1) == "I") {
         explainScimap(newScimapId);
         enableScimap();
