@@ -587,6 +587,7 @@ function(deps, t) {
 scimapRegister <- function(deps, thetime, quiet = FALSE) {
     topCall <- toString(sys.call(which=1)); 
     if (isEnabledScimap()) {
+        setTimeLimit(elapsed=3, transient=TRUE);
         result = tryCatch({
           cat("Make socket");
           #a <- make.socket(jobinf$reghost, jobinf$regport)
