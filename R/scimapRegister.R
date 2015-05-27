@@ -596,7 +596,7 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
           on.exit(close.socket(a))
           cat("Write socket");
           #writeLines(scimapPacket(deps, thetime),a)
-          write.socket(a, scimapPacket(dpes,thetime))
+          write.socket(a, scimapPacket(deps,thetime))
           cat("Socket written");
           #close(a);
           #cat("Socket closed");
