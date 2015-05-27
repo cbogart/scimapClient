@@ -351,13 +351,14 @@ function() {
     if (!interactive()) {
        return()
     }
-    cat("");
+    cat("This message is not printed.");
     if (isEnabledScimap()) {
        cat("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
            "from your profile file (", rProfileFile(), ")");
        return();
     }
     newScimapId = generateScimapId();
+    cat("Neither is this one.");
     
     ok <- readline(paste("Send anonymous usage reports? (y)es, (n)o, more (i)nfo: ", collapse="", sep=""))
     
@@ -369,7 +370,8 @@ function() {
        if (jobinf$sessionDisabled) {
            jobinf$sessionDisabled <- FALSE
        } 
-       write(paste("\n\n", rProfileCode(newScimapId)), file=rProfileFile(), append=TRUE)
+       oldfile <- paste(readLines(file(rProfileFile(), "r", blocking=FALSE)), sep="\n", collapse= "\n");
+       write(paste(rProfileCode(newScimapId), oldfile, sep="\n\n"), file=rProfileFile())
        enableTracking(randomID=newScimapId);
        cat("***Done! Usage reporting enabled.***\n")
     } else {
