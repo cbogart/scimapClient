@@ -178,7 +178,7 @@ getJobId <- function() {
 #  installed, but is not enabled yet.
 #
 newlyInstalled <- function () {
-    return (TRUE);   # permanently enabled for Rocker
+    return (!rProfileHasCode());   # permanently enabled for Rocker
     #packagepath <- find.package("scimapClient");
     #installAge <- difftime(Sys.time(), file.info(packagepath)$mtime, units="min")
     #return (installAge < 10 && !rProfileHasCode())
@@ -589,12 +589,15 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
     if (isEnabledScimap()) {
         result = tryCatch({
           cat("Make socket");
-          a <- make.socket(jobinf$reghost, jobinf$regport)
-          cat("OnExit Close socket");
-          on.exit(close.socket(a))
+          #a <- make.socket(jobinf$reghost, jobinf$regport)
+          a <- socketConnection(host=paste("udp://",jobinf$reghost,sep=""), port=jobinf$regport, timeout=2);
+          #cat("OnExit Close socket");
+          #on.exit(close.socket(a))
           cat("Write socket");
-          write.socket(a, scimapPacket(deps, thetime))
+          writeLines(scimapPacket(deps, thetime),a)
           cat("Socket written");
+          close(a);
+          cat("Socket closed");
         }, error = function(e) {
           cat("scimapClient couldn't upload usage data to", jobinf$reghost, "\n")
         })
