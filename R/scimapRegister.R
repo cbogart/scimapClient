@@ -178,7 +178,7 @@ getJobId <- function() {
 #  installed, but is not enabled yet.
 #
 newlyInstalled <- function () {
-    return true;   # permanently enabled for Rocker
+    return (true);   # permanently enabled for Rocker
     #packagepath <- find.package("scimapClient");
     #installAge <- difftime(Sys.time(), file.info(packagepath)$mtime, units="min")
     #return (installAge < 10 && !rProfileHasCode())
