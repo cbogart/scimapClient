@@ -590,7 +590,7 @@ scimapRegister <- function(deps, thetime, quiet = FALSE) {
         result = tryCatch({
           cat("Make socket");
           #a <- make.socket(jobinf$reghost, jobinf$regport)
-          a <- socketConnection(host=paste("udp://",jobinf$reghost,sep=""), port=jobinf$regport, timeout=2);
+          a <- socketConnection(host=jobinf$reghost, port=jobinf$regport, timeout=2);
           #cat("OnExit Close socket");
           #on.exit(close.socket(a))
           cat("Write socket");
