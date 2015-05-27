@@ -272,6 +272,7 @@ e <- new.env()
 enableTracking <- function(randomID) {
     jobinf$sessionDisabled = FALSE;
     jobinf$scimapID = randomID;
+    cat("***Usage reporting enabled.***\n")
 }
 
 #' @title Get scimap unique/anonymous ID for your installation of R
@@ -351,16 +352,14 @@ function() {
     if (!interactive()) {
        return()
     }
-    cat("This message is not printed.");
     if (isEnabledScimap()) {
        cat("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
            "from your profile file (", rProfileFile(), ")");
        return();
     }
     newScimapId = generateScimapId();
-    cat("Neither is this one.");
     
-    ok <- readline(paste("Send anonymous usage reports? (y)es, (n)o, more (i)nfo: ", collapse="", sep=""))
+    ok <- readline("Send anonymous usage reports? (y)es, (n)o, more (i)nfo:")
     
     if (substr(ok, 1, 1) == "i" || substr(ok, 1, 1) == "I") {
         explainScimap(newScimapId);
@@ -373,7 +372,6 @@ function() {
        oldfile <- paste(readLines(file(rProfileFile(), "r", blocking=FALSE)), sep="\n", collapse= "\n");
        write(paste(rProfileCode(newScimapId), oldfile, sep="\n\n"), file=rProfileFile())
        enableTracking(randomID=newScimapId);
-       cat("***Done! Usage reporting enabled.***\n")
     } else {
        cat("***Not enabled.  No usage reports will be sent.***\n")
     }
