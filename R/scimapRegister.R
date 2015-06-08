@@ -206,9 +206,7 @@ e <- new.env()
        packageStartupMessage("Type ?scimapClient for more information.")
        packageStartupMessage("disableScimap() to disable this package")
     }
-} 
 
-.onLoad <- function(lib, pkg, ...) {
     jobinf$startup <- Sys.time()
 
     # Send a packet just before R shuts down
@@ -217,8 +215,6 @@ e <- new.env()
         if (!identical(thisreportdeps, scimapClient:::jobinf$lastreportdeps)) {
             scimapClient:::scimapRegister(thisreportdeps, Sys.time(), quiet=FALSE)
         } 
-        #scimapClient:::jobinf$lastreportdeps <- thisreportdeps
-        #scimapClient:::jobinf$lastreporttime <- Sys.time()
     }
     reg.finalizer(e, finalize, onexit=TRUE)
     cleanup::on.sigusr1(finalize)
@@ -272,7 +268,7 @@ e <- new.env()
 enableTracking <- function(randomID) {
     jobinf$sessionDisabled = FALSE;
     jobinf$scimapID = randomID;
-    cat("***Usage metering enabled. Use disableScimap() to disable.***\n")
+    packageStartupMessage("***Usage metering enabled. Use disableScimap() to disable.***\n")
 }
 
 #' @title Get scimap unique/anonymous ID for your installation of R
@@ -302,7 +298,7 @@ generateScimapId <- function() {
 #' 
 explainScimap <-
 function(newScimapId) {
-cat("-------------------------------
+packageStartupMessage("-------------------------------
 This package can send anonymous usage tracking information about R packages
 to a server that allows authors of packages to track how
 widely used and installed they are.  This is helpful
@@ -353,13 +349,14 @@ function() {
        return()
     }
     if (isEnabledScimap()) {
-       cat("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
+       packageStartupMessage("Scimap is already enabled.  To disable it, remove the scimap-related lines ",
            "from your profile file (", rProfileFile(), ")");
        return();
     }
     newScimapId = generateScimapId();
     
-    ok <- readline("Send anonymous usage reports? (y)es, (n)o, more (i)nfo:")
+    packageStartupMessage("Send anonymous usage reports? (y)es, (n)o, more (i)nfo:", appendLF=FALSE)
+    ok <- readline("")
     
     if (substr(ok, 1, 1) == "i" || substr(ok, 1, 1) == "I") {
         explainScimap(newScimapId);
@@ -373,7 +370,7 @@ function() {
        write(paste(rProfileCode(newScimapId), oldfile, sep="\n\n"), file=rProfileFile())
        enableTracking(randomID=newScimapId);
     } else {
-       cat("***Not enabled.  No usage reports will be sent.***\n")
+       packageStartupMessage("***Not enabled.  No usage reports will be sent.***\n")
     }
 }
 
@@ -389,7 +386,6 @@ rProfileHasCode <- function() {
 # Internal: the startup code that should be put into the .Rprofile
 rProfileCode <- function(newScimapId) {
     return(paste("##BEGIN_ENABLE_SCIMAP
-    options(defaultPackages=c(getOption(\"defaultPackages\"),\"scimapClient\"))
 
     setHook(packageEvent(\"scimapClient\", \"onLoad\"),
          function(libname, pkgname) {
@@ -414,7 +410,7 @@ function() {
             newprofile <- c(newprofile, l)
         }
         if (length(grep("##END_ENABLE_SCIMAP", l))>0) {
-            betweenTheComments <- TRUE;
+            betweenTheComments <- FALSE;
         }
     }
     write(newprofile, file=rProfileFile(), append=FALSE)
